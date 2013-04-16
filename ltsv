@@ -1,0 +1,115 @@
+#!/usr/bin/perl
+#*****************************************************************************
+# ltsv - LTSV Viewer
+#
+# Usage: tail -f xxx.ltsv | ltsv
+#
+#        Options:
+#         -k name1,name2,... [-k name1 -k name2 ...]
+#          (show specified keys only)
+#
+#         -i name1,name2,... [-i name1 -i name2 ...]
+#          (do not show specified keys)
+#
+#         -w
+#          show key with fixed width
+#
+#         -d str
+#          specify delimiter / boundary line
+#
+#         -D
+#          no line delimiter
+#*****************************************************************************
+use strict;
+use warnings;
+use Getopt::Long qw(:config no_ignore_case bundling);
+
+my @opt_keys = ();
+my @opt_ignore_keys = ();
+my $extract_cookie;
+my $delimiter = "";
+my $no_delimiter;
+my $fixed_width;
+my $width;
+
+my %keys = ();
+my %ignore_keys = ();
+
+if (! GetOptions(
+    'k|keys=s@'        => \@opt_keys,
+    'i|ignore-keys=s@' => \@opt_ignore_keys,
+    'C|extract-cookie' => \$extract_cookie,
+    'd|delimiter=s'    => \$delimiter,
+    'D|no-delimiter'   => \$no_delimiter,
+    'w|fixed-width',   => \$fixed_width,
+)) {
+    usage();
+}
+
+foreach ( map { split "," } @opt_keys ) {
+    $keys{$_} = "";
+}
+
+foreach ( map { split "," } @opt_ignore_keys ) {
+    $ignore_keys{$_} = "";
+}
+
+print $delimiter,"\n";
+
+while (my $line = <STDIN>) {
+    chomp($line);
+    my %kv = ();
+    if ($fixed_width && ! $width) {
+        for (map { [ split ':', $_, 2 ] } split "\t", $line) {
+            if (! $width || $width < length($_->[0])) {
+                $width = length($_->[0]);
+            }
+        }
+        ++ $width;
+    }
+    for (map { [ split ':', $_, 2 ] } split "\t", $line) {
+        if (scalar @opt_keys) {
+            print_line($_->[0], $_->[1]) if (exists $keys{$_->[0]});
+        }
+        elsif (scalar @opt_ignore_keys) {
+            print_line($_->[0], $_->[1]) if (! exists $ignore_keys{$_->[0]});
+        }
+        else {
+            print_line($_->[0], $_->[1]);
+        }
+    }
+    print "$delimiter\n" if (! $no_delimiter);
+}
+
+sub extract_cookie {
+    my ($str) = @_;
+
+    my %cookies = ();
+
+    for (map { [ split "=", $_, 2 ] } split "; ", $str) {
+        $cookies{$_->[0]} = $_->[1];
+    }
+
+    return \%cookies;
+}
+
+sub usage {
+    print "ltsv [-i key,key,..] [-e key,key,...] [-C]\n";
+    exit 1;
+}
+
+sub print_line {
+    my ($k, $v) = @_;
+
+    my $format = ($width) ? "%-${width}s" : "%s";
+
+    if ($k eq "cookie" && $extract_cookie && $v ne "-") {
+        my $hash = extract_cookie($v);
+        foreach my $cookie_name (sort keys %{$hash}) {
+            printf "$format: %s=%s\n", $k, $cookie_name, $hash->{$cookie_name};
+        }
+    }
+    else {
+        printf "$format: %s\n", $k, $v;
+    }
+}
