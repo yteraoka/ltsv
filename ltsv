@@ -19,6 +19,9 @@
 #
 #         -D
 #          no line delimiter
+#
+#         -B
+#          line buffered output ($| = 1)
 #*****************************************************************************
 use strict;
 use warnings;
@@ -31,6 +34,7 @@ my $delimiter = "";
 my $no_delimiter;
 my $fixed_width;
 my $width;
+my $line_buffered;
 
 my %keys = ();
 my %ignore_keys = ();
@@ -42,10 +46,13 @@ if (! GetOptions(
     'd|delimiter=s'    => \$delimiter,
     'D|no-delimiter'   => \$no_delimiter,
     'w|fixed-width'    => \$fixed_width,
+    'B|line-buffered'  => \$line_buffered,
     'h|help'           => \&usage,
 )) {
     usage();
 }
+
+$| = 1 if ($line_buffered);
 
 foreach ( map { split "," } @opt_keys ) {
     $keys{$_} = "";
@@ -95,7 +102,7 @@ sub extract_cookie {
 }
 
 sub usage {
-    print "ltsv [-w] [-D|-d str] [-k key,key,..] [-i key,key,...] [-C]\n";
+    print "ltsv [-B] [-w] [-D|-d str] [-k key,key,..] [-i key,key,...] [-C]\n";
     exit 1;
 }
 
