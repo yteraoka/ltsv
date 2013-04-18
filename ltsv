@@ -95,7 +95,7 @@ sub extract_cookie {
 }
 
 sub usage {
-    print "ltsv [-w] [-k key,key,..] [-i key,key,...] [-C]\n";
+    print "ltsv [-w] [-D|-d str] [-k key,key,..] [-i key,key,...] [-C]\n";
     exit 1;
 }
 
