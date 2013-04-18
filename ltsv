@@ -41,7 +41,8 @@ if (! GetOptions(
     'C|extract-cookie' => \$extract_cookie,
     'd|delimiter=s'    => \$delimiter,
     'D|no-delimiter'   => \$no_delimiter,
-    'w|fixed-width',   => \$fixed_width,
+    'w|fixed-width'    => \$fixed_width,
+    'h|help'           => \&usage,
 )) {
     usage();
 }
@@ -94,7 +95,7 @@ sub extract_cookie {
 }
 
 sub usage {
-    print "ltsv [-i key,key,..] [-e key,key,...] [-C]\n";
+    print "ltsv [-w] [-k key,key,..] [-i key,key,...] [-C]\n";
     exit 1;
 }
 
